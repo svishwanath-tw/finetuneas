@@ -15,35 +15,43 @@
 <!-- BEGIN container -->
 <div class="container-fluid">
     <!-- BEGIN directions -->
-    <div class="row b-header">
-        <div class="col-sm">
+    <div class="row b-header sticky-top">
+        <div class="col">
             <p class="logo-text">finetuneas</p>
             <!-- BEGIN player -->
             <div id="player">
                 <audio id="audioplayer" src="" ontimeupdate="ticker(this.currentTime);"></audio>
-            </div>
+                <div style="display:inline-block;">
+                    <div class="progress" style="height: 5px;width:400px;">
+                        <div id="playerprogress" class="progress-bar" role="progressbar" style="width:0%;"></div>
+                    </div>
+                </div>
 
-            <div style="display:inline-block;">
-                <div class="progress" style="height: 5px;width:100px;">
-                    <div id="playerprogress" class="progress-bar" role="progressbar" style="width:0%;"></div>
+                <div id="audiocontrols">
+                    <span id="audioticker"></span>
+                    <a class="pause" id="stop">ıı</a>
+                </div>
+                <div id="SetFragmentBreak">
+                <button id="setEndTime" class="btn btn-primary" onclick="setFragmentBreak()" class="b-header cut">Break Framgment Here</button>
                 </div>
             </div>
-
-            <div id="audiocontrols">
-                <span id="audioticker"></span>
-                <a class="pause" id="stop">ıı</a>
-            </div>
+        </div>
+        <div class="w-100"></div>
             <!-- END player -->
 
             <!-- BEGIN loadbuttons -->
             <!-- do not remove the next line -->
             <!-- AENEAS_REPLACE_COMMENT_BEGIN -->
-            <div id="step1" style="display:inline;">
+
+        <div class="col">            
+            <div id="step1" >
                 <p class="file-label">Audio:</p>
-                <input type="file" id="audioinput" accept="audio/*" autocomplete="off" style="width:250px;"/>
+                <input type="file" class="btn" id="audioinput" accept="audio/*" autocomplete="off" style="width:250px"/>
             </div>
             <!--<div id="fileinfo"></div>-->
-            <div id="step2" style="display:inline;">
+        </div>
+        <div class="col">            
+            <div id="step2" >
                 <p class="file-label">Sync-map:</p>
                 <input type="file" id="fileinput" accept=".json,.csv,.srt" autocomplete="off" style="width:250px;"/>
             </div>
@@ -63,8 +71,8 @@
     </div>
     <!-- END directions -->
     <div class="row b-content">
-        <div class="col-3">
-            <div class="settings">
+        <div class="col-3 position-fixed sidemenu">
+            <div class="settings sticky-top sidemenu">
                 <label for="timeStep" style="display:block">Time increment (s):</label>
                 <input id="timeStep" type="number" min="0.010" step="0.010" value="0.100" style="display:block"/>
                 <label for="couple" style="display:block">Couple ends/starts:</label>
@@ -159,7 +167,7 @@
     // AENEAS_REPLACE_ALIGN_TEXT
     var playbackRate = 1.0;
     // AENEAS_REPLACE_PLAYBACK_RATE
-    var continuousPlay = false;
+    var continuousPlay = true;
     // AENEAS_REPLACE_CONTINUOUS_PLAY
     var timeFormatHHMMSSmmm = false;
     // AENEAS_REPLACE_TIME_FORMAT
@@ -379,6 +387,7 @@
 
     function loadAudio(audioFilePath) {
         audioElement.setAttribute("src", audioFilePath);
+        console.log("AudioFilePath", audioFilePath);
     }
 
     function buttonLoadJSON(evt) {
@@ -1126,6 +1135,19 @@
         }
     }
 
+    function keepFragmentFocus() {
+        var playerTime = audioElement.currentTime;
+        for(var i = 0 ; i < fragments.length ; i++) {
+            fragment = fragments[i]
+            if(fragment.begin < playerTime && fragment.end >= playerTime) {
+                currentIndex = i;
+                console.log("Bringing element f"+currentIndex + " into view.")
+                document.getElementById("f"+currentIndex).scrollIntoView(true)
+                break;
+            }
+        }
+    }
+
     function pausePlayOverlay() {
 		if(audioElement.paused) {
 			audioElement.play();
@@ -1134,7 +1156,33 @@
 			stopOverlay();
 		}
     }
-    
+
+    function setFragmentBreak() {
+        var time = audioElement.currentTime;
+        console.log("End time will be set to " + time)
+        for(var i = 0 ; i < fragments.length ; i++) {
+            fragment = fragments[i]
+            if(fragment.begin < time && fragment.end > time) {
+                console.log("Found fragment", fragment)
+                if(time - fragment.begin > 1) {
+                    fragment.end = time
+                    updateTimeForSegment("end");
+                    updateParent(fragment);
+                    console.log("Updated fragment end time : ", fragment);
+                    if (i < fragments.length - 1) {
+                        nextFragment = fragments[i+1];
+                        nextFragment.begin = time
+                        updateTimeForSegment("begin")
+                        updateParent(nextFragment);
+                        console.log("Updated fragment begin time : ", nextFragment)
+                    }
+                } else {
+                    console.error("Fragment too small, ", fragment.begin - time  ," wont' break frament here");
+                }
+            }
+        }
+    }
+
     function stopOverlay() {
         audioElement.pause();
     }
@@ -1145,6 +1193,7 @@
             currentIndex += inc;
             highlight(ACTIVE);
             audioElement.currentTime = fragments[currentIndex].begin;
+            document.getElementById("f"+currentIndex).scrollIntoView({behaviour: "smooth", block: "center"})
             audioElement.play();
         } else {
             stopOverlay();

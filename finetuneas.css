@@ -20,15 +20,26 @@ select {
 .b-header {
     margin-top: 15px;
     margin-bottom: 15px;
+    padding-bottom: 15px;
+    height: 200px;
+    background:white;
+}
+
+
+#player {
+    display: inline-block;
+    clear: right;
+    float: left;
 }
 
 .b-header .sidebar-menu {
     margin-left: 5px;
+    margin-right: 5px;
 }
 
 .b-header .logo-text {
     margin-left: 5px;
-    display: inline;
+    display: block;
     color: #4f79ff;
     font-weight: 400;
     font-size: 16pt;
@@ -36,17 +47,24 @@ select {
     text-transform: uppercase;
 }
 
-.b-header .file-label {
-    margin-left: 5px;
-    color: #e2e3ed;
-    font-weight: 300;
-    font-size: 8pt;
+.file-label {
     font-family: 'Lato', sans-serif;
-    display: inline;
 }
 
 .b-content {
     background-color: #efeff7;
+    overflow-y: auto;
+    position: relative;
+    top:200px;
+}
+
+.sidemenu {
+    width: 200px;
+    z-index: 1040;
+}
+
+#fragments  {
+    margin-left:230px;
 }
 
 .b-content .settings {
@@ -194,17 +212,8 @@ tr {
 
 #fileinput,
 #audioinput {
-    /*position: relative;*/
-    /*bottom: 5px;*/
-}
-
-#step1,
-#step2,
-#fileinfo {
-    text-align: center;
-    /*margin: 20px;*/
-    font-size: 14px;
-    font-weight: 400;
+    float:left;
+    width: 400px
 }
 
 #directions {
@@ -213,6 +222,10 @@ tr {
     max-width: 700px;
     border: 1px solid black;
     padding: 20px;
+}
+
+.col {
+    min-height: 33px;
 }
 
 .normal {
@@ -231,10 +244,13 @@ tr {
     display: inline;
     text-align: right;
     background-color: #fff;
+    float:left;
+    clear:right;
 }
 
 #player {
     display: inline;
+    float:left;
 }
 
 #audioticker {
