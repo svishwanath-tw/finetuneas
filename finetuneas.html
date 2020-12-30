@@ -31,9 +31,12 @@
                     <span id="audioticker"></span>
                     <a class="pause" id="stop">ıı</a>
                 </div>
-                <div id="SetFragmentBreak">
+                
+            </div>
+        </div>
+        <div class="col">
+            <div id="SetFragmentBreak">
                 <button id="setEndTime" class="btn btn-primary" onclick="setFragmentBreak()" class="b-header cut">Break Framgment Here</button>
-                </div>
             </div>
         </div>
         <div class="w-100"></div>
@@ -72,7 +75,24 @@
     <!-- END directions -->
     <div class="row b-content">
         <div class="col-3 position-fixed sidemenu">
-            <div class="settings sticky-top sidemenu">
+            <div class="settings sidemenu">
+                <label for="outputFormat" style="display:block">Format:</label>
+                <select name="outputFormat" id="outputFormat" style="display:block">
+                    <option value="csv">CSV</option>
+                    <option value="json" selected="selected">JSON</option>
+                    <option value="smil">SMIL</option>
+                    <option value="srt">SRT</option>
+                    <option value="ssv">SSV</option>
+                    <option value="ttml">TTML</option>
+                    <option value="tsv">TSV</option>
+                    <option value="txt">TXT</option>
+                    <option value="vtt">VTT</option>
+                    <option value="xml">XML</option>
+                </select>
+                <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
+                <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
+                <button class="btn btn-primary btn-sm" id="download" style="display:block;margin-top:5px;margin-bottom:5px;">Save</button>
+                <hr style="display:block"/>
                 <label for="timeStep" style="display:block">Time increment (s):</label>
                 <input id="timeStep" type="number" min="0.010" step="0.010" value="0.100" style="display:block"/>
                 <label for="couple" style="display:block">Couple ends/starts:</label>
@@ -100,24 +120,7 @@
                 <label for="playWindowTime" style="display:block">Play window time (s):</label>
                 <input id="playWindowTime" type="number" min="0.1" max="100" step="0.10" value="2.0"
                        style="display:inline-block"/>
-                <button class="btn btn-primary btn-sm" id="buttonPlayWindow" style="display:inline-block">OFF</button>
-                <hr style="display:block"/>
-                <label for="outputFormat" style="display:block">Format:</label>
-                <select name="outputFormat" id="outputFormat" style="display:block">
-                    <option value="csv">CSV</option>
-                    <option value="json" selected="selected">JSON</option>
-                    <option value="smil">SMIL</option>
-                    <option value="srt">SRT</option>
-                    <option value="ssv">SSV</option>
-                    <option value="ttml">TTML</option>
-                    <option value="tsv">TSV</option>
-                    <option value="txt">TXT</option>
-                    <option value="vtt">VTT</option>
-                    <option value="xml">XML</option>
-                </select>
-                <input id="smilAudioRef" style="display:none" type="text" placeholder="audio_ref"/>
-                <input id="smilPageRef" style="display:none" type="text" placeholder="page_ref"/>
-                <button class="btn btn-primary btn-sm" id="download" style="display:block;margin-top:5px;margin-bottom:5px;">Save</button>
+                <button class="btn btn-primary btn-sm" id="buttonPlayWindow" style="display:inline-block">OFF</button>                
             </div>
         </div>
         <div class="col-sm">
@@ -150,6 +153,7 @@
     var ACTIVE = "#c5c7dc";
     var CLEAR = "";
     var TRANSITION_TIMEOUT = 0.400;
+    var audioFileName = null;
     /*
      variables that can be modified by the user at runtime
     */
@@ -359,7 +363,8 @@
     function buttonLoadAudio(evt) {
         var audioFile = evt.target.files[0];
         if (audioFile) {
-        
+            console.log("FILE NAME:", audioFile.name)
+            audioFileName = audioFile.name.split(".")[0]
             readBinaryStringFromBlob(audioFile, catchXingHeader);
             // console.log(audioFile);
             function catchXingHeader(binary) {		
@@ -888,7 +893,7 @@
                 data = downloadJSON();
         }
         var message = "The modified " + outputFormat.toUpperCase() + " file will be saved in your default Download directory. Please enter a file name:";
-        var suggestedFileName = "tuned." + outputFormat;
+        var suggestedFileName = "tuned-" + audioFileName + "." + outputFormat;
         var fileName = prompt(message, suggestedFileName);
         triggerDownload(data, fileName);
     }
@@ -1159,27 +1164,22 @@
 
     function setFragmentBreak() {
         var time = audioElement.currentTime;
-        console.log("End time will be set to " + time)
-        for(var i = 0 ; i < fragments.length ; i++) {
-            fragment = fragments[i]
-            if(fragment.begin < time && fragment.end > time) {
-                console.log("Found fragment", fragment)
-                if(time - fragment.begin > 1) {
-                    fragment.end = time
-                    updateTimeForSegment("end");
-                    updateParent(fragment);
-                    console.log("Updated fragment end time : ", fragment);
-                    if (i < fragments.length - 1) {
-                        nextFragment = fragments[i+1];
-                        nextFragment.begin = time
-                        updateTimeForSegment("begin")
-                        updateParent(nextFragment);
-                        console.log("Updated fragment begin time : ", nextFragment)
-                    }
-                } else {
-                    console.error("Fragment too small, ", fragment.begin - time  ," wont' break frament here");
-                }
+        console.log("Fragment end time will be set to " + time)
+        var fragment = fragments[currentIndex]
+        if(time - fragment.begin > 1) {
+            fragment.end = time
+            updateTimeForSegment("end");
+            updateParent(fragment);
+            console.log("Updated fragment end time : ", fragment);
+            if (currentIndex < fragments.length - 1) {
+                nextFragment = fragments[currentIndex+1];
+                nextFragment.begin = time
+                updateTimeForSegment("begin")
+                updateParent(nextFragment);
+                console.log("Updated next fragment begin time : ", nextFragment)
             }
+        } else {
+            console.error("Fragment too small, ", fragment.begin - time  ," wont' break frament here");
         }
     }
 
